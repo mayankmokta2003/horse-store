@@ -13,7 +13,6 @@ abstract contract Base_testV1 is Test {
     function setUp() public virtual{
         horseStore = IHorseStore(address(new HorseStore()));
     }
-
     
 
     function testReadvalue() public virtual{

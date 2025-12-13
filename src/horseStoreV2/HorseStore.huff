@@ -1,0 +1,94 @@
+/* IMPORTS */
+#include "../../lib/huffmate/src/data-structures/Hashmap.huff"
+
+
+/* INTERFACES */
+#define function mintHorse() nonpayable returns()
+#define function feedHorse(uint256) nonpayable returns()
+#define function isHappyHorse(uint256) view returns(bool)
+#define function horseIdToFedTimeStamp(uint256) view returns(uint256)
+#define function HORSE_HAPPY_IF_FED_WITHIN() view returns(uint256)
+
+
+/* STORAGE SLOTS */
+#define constant HORSE_FED_TIMESTAMP_LOCATION = FREE_STORAGE_POINTER()
+#define constant ONE_DAY_HEX = 0x0000000000000000000000000000000000000000000000000000000000015180
+
+
+
+#define macro MAIN() = takes(0) returns(0){
+
+    0x00 calldataload 0xe0 shr
+
+    dup1 __FUNC_SIG(mintHorse) eq mintHorse jumpi
+
+    dup1 __FUNC_SIG(feedHorse) eq feedHorse jumpi
+
+    dup1 __FUNC_SIG(isHappyHorse) eq isHappyHorse jumpi
+
+    dup1 __FUNC_SIG(horseIdToFedTimeStamp) eq horseIdToFedTimeStamp jumpi
+
+    dup1 __FUNC_SIG(HORSE_HAPPY_IF_FED_WITHIN) eq HORSE_HAPPY_FED_WITHIN jumpi
+
+    revert
+
+    mintHorse: 
+    MINT_HORSE()
+
+    feedHorse:
+    FEED_HORSE()
+
+    isHappyHorse:
+    IS_HAPPY_HORSE()
+
+    horseIdToFedTimeStamp:
+    GET_HORSE_FED_TIMESTAMP()
+
+    HORSE_HAPPY_IF_FED_WITHIN:
+    HORSE_HAPPY_FED_WITHIN
+
+}
+
+#define macro MINT_HORSE() = takes(0) returns(0){}\
+
+#define macro FEED_HORSE() = takes(0) returns(0){
+    timestamp
+    0x04 calldataload
+    [HORSE_FED_TIMESTAMP_LOCATION] 
+    STORE_ELEMENT_FROM_KEYS(0x00)
+    stop
+}
+
+#define macro IS_HAPPY_HORSE() = takes(0) returns(0){
+    0x04 calldataload
+    [HORSE_FED_TIMESTAMP_LOCATION] 
+    LOAD_ELEMENT_FROM_KEYS(0x00)
+    timestamp
+    dup2 dup2
+    sub
+    ONE_DAY_HEX
+    gt
+    start_return_true jumpi
+    eq
+    start_return
+    jump
+
+    start_return_true:
+    0x01
+
+    start_return:
+    0x00 mstore
+    0x20 0x00 return
+
+}
+
+#define macro GET_HORSE_FED_TIMESTAMP() = takes(0) returns(0){
+    0x04 calldataload
+    [HORSE_FED_TIMESTAMP_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro HORSE_HAPPY_FED_WITHIN() = takes(0) returns(0){
+
+}
