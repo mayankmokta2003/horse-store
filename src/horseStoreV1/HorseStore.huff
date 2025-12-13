@@ -1,79 +1,116 @@
 
-// send calldata => function dispatch => function
+// // send calldata => function dispatch => function
 
-// here we are creating fns in bytecode similar to what HorseStore is doing
-// 0xcdfead2e000000000000000000000000000000000000000000000007
+// // here we are creating fns in bytecode similar to what HorseStore is doing
+// // 0xcdfead2e000000000000000000000000000000000000000000000007
 
-// Interface
+// // Interface
+// #define function updateHorseNumber(uint256) nonpayable returns()
+
+// #define function readNumberOfHorses() view returns(uint256)
+
+// #define constant NUMBER_OF_HORSES_STORAGE_SLOT = FREE_STORAGE_POINTER()  // assigns to 0 index as storage
+
+
+
+// #define macro MAIN() = takes(0) returns(0) {
+//     // we want to get fn selector 4 bytes of calldata 
+//     0x00     //starting from where to start its offset or slot
+//     calldataload    //data
+//     // 0x000001 0001     65537            0x0000010001    0x000001
+//     // 32bytes long we want 4 bytes so we want to remove 28 bytes which is 224 bits and in hex 224 is 0xe0
+//     0xe0   
+//     shr    //shift to right side as we want left one i.e. fn selector
+
+//     dup1      //this will create duplicate of top i.e shr which is fn selector so we can use it again
+
+//     // 0xcdfead2e      //fn selector of updateHorseNumber fn   [0xcdfead2e    shr] 
+
+//     // so instead of using raw fn selector like 0xcdfead2e we use __FUNC_SIG()
+//     __FUNC_SIG(updateHorseNumber)
+
+//     eq              // checks 0xcdfead2e == calldataload if true 1 else 0  [eq    0xcdfead2e    shr]
+
+//     // if its equal then we want to jump to some destinantion and do something so we use jumpi
+//     updatejump          //  stack = [updatejump   eq]    => its what jumpi expects
+//     jumpi           //it takes destination on top and bool on bottom so we use updatejump and update later.
+
+//     // 0xe026c017       //new fn selector now we will compare this one with shr
+//     __FUNC_SIG(readNumberOfHorses)
+//     eq              // here we compared with shr i t will return 1 if true else 0
+
+//     readjump
+
+//     jumpi 
+
+//     0x00 0x00 revert   //it will revert if jumpi fails as eq returns 1 so no useless fn gets called
+
+//     updatejump:
+//     SET_NUMBER_OF_HORSES()
+
+//     readjump: 
+//     GET_NUMBER_OF_HORSES()
+
+// }
+
+// #define macro SET_NUMBER_OF_HORSES() = takes(0) returns(0){
+    
+//     // 2. get the value to store from calldata
+//     0x04  //in calldata first 4 are fn selector nex is value so we start from value to get value
+//     calldataload     // value
+
+//     // 1. assign the storage slot
+//     [NUMBER_OF_HORSES_STORAGE_SLOT]          //  [storageslot   value  fn-selector]  thats what sstore wants
+
+//     // 3. store the value by sstore
+//     sstore
+//     stop       // we stop this so it will not go on and on its stop not revert
+// }
+
+// #define macro GET_NUMBER_OF_HORSES() = takes(0) returns(0){
+//     // 1. get the storage slot
+//     [NUMBER_OF_HORSES_STORAGE_SLOT]
+//     // 2. get the value from that storage slot
+//     sload
+//     // return but in order to return we have to first put the value in memory
+//     0x00   mstore    //in order to put we first have to tell in which index
+//     0x20   0x00   return   //now returns wants [size   index]  size is we want 32 bytes = 0x20 in hex
+    
+// }
+
 #define function updateHorseNumber(uint256) nonpayable returns()
-
 #define function readNumberOfHorses() view returns(uint256)
 
-#define constant NUMBER_OF_HORSES_STORAGE_SLOT = FREE_STORAGE_POINTER()  // assigns to 0 index as storage
+#define macro MAIN() = takes(0) returns(0){
 
+    0x00   calldataload    
+    0xe0    shr   dup1
+    __FUNC_SIG(updateHorseNumber)  eq
+    updatejump    jumpi  
 
+    __FUNC_SIG(readNumberOfHorses)  eq 
+    readjump    jumpi
 
-#define macro MAIN() = takes(0) returns(0) {
-    // we want to get fn selector 4 bytes of calldata 
-    0x00     //starting from where to start its offset or slot
-    calldataload    //data
-    // 0x000001 0001     65537            0x0000010001    0x000001
-    // 32bytes long we want 4 bytes so we want to remove 28 bytes which is 224 bits and in hex 224 is 0xe0
-    0xe0   
-    shr    //shift to right side as we want left one i.e. fn selector
+    0x00 0x00 revert
 
-    dup1      //this will create duplicate of top i.e shr which is fn selector so we can use it again
-
-    // 0xcdfead2e      //fn selector of updateHorseNumber fn   [0xcdfead2e    shr] 
-
-    // so instead of using raw fn selector like 0xcdfead2e we use __FUNC_SIG()
-    __FUNC_SIG(updateHorseNumber)
-
-    eq              // checks 0xcdfead2e == calldataload if true 1 else 0  [eq    0xcdfead2e    shr]
-
-    // if its equal then we want to jump to some destinantion and do something so we use jumpi
-    updatejump          //  stack = [updatejump   eq]    => its what jumpi expects
-    jumpi           //it takes destination on top and bool on bottom so we use updatejump and update later.
-
-    // 0xe026c017       //new fn selector now we will compare this one with shr
-    __FUNC_SIG(readNumberOfHorses)
-    eq              // here we compared with shr i t will return 1 if true else 0
-
-    readjump
-
-    jumpi 
-
-    0x00 0x00 revert   //it will revert if jumpi fails as eq returns 1 so no useless fn gets called
-
-    updatejump:
+    updatejump: 
     SET_NUMBER_OF_HORSES()
 
-    readjump: 
+    readjump:
     GET_NUMBER_OF_HORSES()
+
 
 }
 
 #define macro SET_NUMBER_OF_HORSES() = takes(0) returns(0){
-    
-    // 2. get the value to store from calldata
-    0x04  //in calldata first 4 are fn selector nex is value so we start from value to get value
-    calldataload     // value
-
-    // 1. assign the storage slot
-    [NUMBER_OF_HORSES_STORAGE_SLOT]          //  [storageslot   value  fn-selector]  thats what sstore wants
-
-    // 3. store the value by sstore
-    sstore
-    stop       // we stop this so it will not go on and on its stop not revert
+    0x04 calldataload 
+    0x00 sstore
+    stop
 }
 
 #define macro GET_NUMBER_OF_HORSES() = takes(0) returns(0){
-    // 1. get the storage slot
-    [NUMBER_OF_HORSES_STORAGE_SLOT]
-    // 2. get the value from that storage slot
-    sload
-    // return but in order to return we have to first put the value in memory
-    0x00   mstore    //in order to put we first have to tell in which index
-    0x20   0x00   return   //now returns wants [size   index]  size is we want 32 bytes = 0x20 in hex
-    
+    0x00 sload
+    0x00 mstore
+    0x20 0x00 return
 }
+

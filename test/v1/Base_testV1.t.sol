@@ -4,13 +4,14 @@ pragma solidity 0.8.20;
 
 import { Test } from "forge-std/Test.sol";
 import { HorseStore } from "../../src/horseStoreV1/HorseStore.sol";
+import { IHorseStore } from "../../src/horseStoreV1/IHorseStore.sol";
 
 abstract contract Base_testV1 is Test {
 
-    HorseStore public horseStore;
+    IHorseStore public horseStore;
 
     function setUp() public virtual{
-        horseStore = new HorseStore();
+        horseStore = IHorseStore(address(new HorseStore()));
     }
 
     
